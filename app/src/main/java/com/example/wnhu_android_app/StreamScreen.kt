@@ -1,5 +1,6 @@
 package com.example.wnhu_android_app
 
+import android.media.MediaPlayer
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -12,12 +13,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 
 @Composable
 fun StreamScreen() {
+
+    val context = LocalContext.current
+
+    val mediaPlayer = remember {
+        MediaPlayer.create(context, R.raw.heavy)
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            mediaPlayer.release()
+        }
+    }
 
     val song = SongModel(
         song = "Heavy",
@@ -28,7 +42,7 @@ fun StreamScreen() {
         duration = 180000,
         imageURL = "https://i.scdn.co/image/ab67616d0000b273657d6776f64aa731c8d1748b"
     )
-
+    
     var isPlaying by remember { mutableStateOf(false) }
     var isThumbsUp by remember { mutableStateOf(false) }
     var isThumbsDown by remember { mutableStateOf(false) }
@@ -111,7 +125,14 @@ fun StreamScreen() {
                 )
             }
 
-            IconButton(onClick = { isPlaying = !isPlaying }) {
+            IconButton(onClick = {
+                isPlaying = !isPlaying
+                if (isPlaying) {
+                    mediaPlayer.start()
+                } else {
+                    mediaPlayer.pause()
+                }
+            }) {
                 Icon(
                     painter = painterResource(
                         id = if (isPlaying) R.drawable.baseline_pause_circle_24
@@ -122,6 +143,7 @@ fun StreamScreen() {
                     modifier = Modifier.size(100.dp)
                 )
             }
+
 
             IconButton(onClick = {
                 isThumbsUp = !isThumbsUp
