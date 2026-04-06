@@ -7,7 +7,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -16,13 +15,10 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import com.example.wnhu_android_app.R
-import com.example.wnhu_android_app.SongModel
 
 @Composable
 fun StreamScreen() {
 
-    // Fake data for now — replace later
     val song = SongModel(
         song = "Heavy",
         artist = "The Marias",
@@ -45,7 +41,6 @@ fun StreamScreen() {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
-        // Info button
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -61,7 +56,6 @@ fun StreamScreen() {
             }
         }
 
-        // Logo
         Image(
             painter = painterResource(id = R.drawable.wnhu),
             contentDescription = "Logo",
@@ -74,7 +68,6 @@ fun StreamScreen() {
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // Artwork
         AsyncImage(
             model = song.highResArtwork,
             contentDescription = "Artwork",
@@ -89,14 +82,12 @@ fun StreamScreen() {
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // Song info
         Text(song.song, color = Color.White, style = MaterialTheme.typography.titleLarge)
         Text(song.artist, color = Color.Gray, style = MaterialTheme.typography.titleMedium)
         Text(song.album, color = Color.Gray, style = MaterialTheme.typography.titleMedium)
 
         Spacer(modifier = Modifier.height(30.dp))
 
-        // Buttons row
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -105,8 +96,6 @@ fun StreamScreen() {
             horizontalArrangement = Arrangement.SpaceAround
         ) {
 
-            // Thumbs down
-            // Thumbs down
             IconButton(onClick = {
                 isThumbsDown = !isThumbsDown
                 if (isThumbsUp) isThumbsUp = false
@@ -122,7 +111,6 @@ fun StreamScreen() {
                 )
             }
 
-// Play / Pause
             IconButton(onClick = { isPlaying = !isPlaying }) {
                 Icon(
                     painter = painterResource(
@@ -135,7 +123,6 @@ fun StreamScreen() {
                 )
             }
 
-// Thumbs up
             IconButton(onClick = {
                 isThumbsUp = !isThumbsUp
                 if (isThumbsDown) isThumbsDown = false
@@ -150,9 +137,6 @@ fun StreamScreen() {
                     modifier = Modifier.size(30.dp)
                 )
             }
-
-
-            // Info popup
             if (isInfoShowing) {
                 AlertDialog(
                     onDismissRequest = { isInfoShowing = false },
