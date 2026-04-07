@@ -17,9 +17,21 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.runtime.collectAsState
+
+
 
 @Composable
 fun StreamScreen() {
+
+    val viewModel: SongDataViewModel = viewModel()
+    val song by viewModel.song.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.updateFromAPI()
+    }
+
 
     val context = LocalContext.current
 
@@ -33,16 +45,6 @@ fun StreamScreen() {
         }
     }
 
-    val song = SongModel(
-        song = "Heavy",
-        artist = "The Marias",
-        album = "Cinema",
-        genre = "Alternative",
-        releaseDate = "2021",
-        duration = 180000,
-        imageURL = "https://i.scdn.co/image/ab67616d0000b273657d6776f64aa731c8d1748b"
-    )
-    
     var isPlaying by remember { mutableStateOf(false) }
     var isThumbsUp by remember { mutableStateOf(false) }
     var isThumbsDown by remember { mutableStateOf(false) }
@@ -91,8 +93,10 @@ fun StreamScreen() {
                 .padding(horizontal = 30.dp)
                 .shadow(8.dp, RoundedCornerShape(14.dp)),
             contentScale = ContentScale.Crop,
-            placeholder = painterResource(id = R.drawable.wnhu)
+            placeholder = painterResource(id = R.drawable.wnhu),
+            error = painterResource(id = R.drawable.wnhu)
         )
+
 
         Spacer(modifier = Modifier.height(20.dp))
 
@@ -168,7 +172,7 @@ fun StreamScreen() {
                             Text("Artist: ${song.artist}")
                             Text("Album: ${song.album}")
                             Text("Genre: ${song.genre}")
-                            Text("Duration: ${song.formattedDuration}")
+                            Text("Duration: ${song.duration}")
                         }
                     },
                     confirmButton = {

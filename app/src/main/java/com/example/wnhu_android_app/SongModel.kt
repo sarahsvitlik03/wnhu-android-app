@@ -1,22 +1,20 @@
 package com.example.wnhu_android_app
 
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class SongModel(
-    val song: String,
-    val artist: String,
-    val album: String,
-    val genre: String,
-    val releaseDate: String,
-    val duration: Int,
-    val imageURL: String
+    @SerialName("trackName") val song: String = "",
+    @SerialName("artistName") val artist: String = "",
+    @SerialName("collectionName") val album: String = "",
+    @SerialName("primaryGenreName") val genre: String = "",
+    @SerialName("releaseDate") val releaseDate: String = "",
+    @SerialName("trackTimeMillis") val duration: Int = 0,
+    @SerialName("artworkUrl100") val imageURL: String = ""
 ) {
     val highResArtwork: String
         get() = imageURL.replace("100x100", "600x600")
-
-    val formattedDuration: String
-        get() {
-            val totalSeconds = duration / 1000
-            val minutes = totalSeconds / 60
-            val seconds = totalSeconds % 60
-            return "%d:%02d".format(minutes, seconds)
-        }
 }
+
+
