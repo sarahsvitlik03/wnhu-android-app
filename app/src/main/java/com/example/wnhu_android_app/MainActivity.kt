@@ -95,10 +95,14 @@ fun MainScreen() {
         }
     ) { padding ->
         Box(modifier = Modifier.padding(padding)) {
+            val app = remember { AppVariables() }
+            val userData = remember { UserData() }
+
             when (selectedTab) {
                 "stream" -> StreamScreen()
-                "account" -> AccountScreen()   // create this later
+                "account" -> AccountScreen(userData, app)
             }
+
         }
     }
 }
