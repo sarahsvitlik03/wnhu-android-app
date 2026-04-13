@@ -179,7 +179,7 @@ fun StreamScreen(userData: UserData) {
                     Text("Artist: ${song.artist}")
                     Text("Album: ${song.album}")
                     Text("Genre: ${song.genre}")
-                    Text("Duration: ${song.duration}")
+                    Text("Duration: ${formatSongDuration(song.duration)}")
                 }
             },
             confirmButton = {
@@ -189,4 +189,11 @@ fun StreamScreen(userData: UserData) {
             }
         )
     }
+}
+
+private fun formatSongDuration(durationMillis: Int): String {
+    val totalSeconds = (durationMillis / 1000).coerceAtLeast(0)
+    val minutes = totalSeconds / 60
+    val seconds = totalSeconds % 60
+    return String.format("%d:%02d", minutes, seconds)
 }
