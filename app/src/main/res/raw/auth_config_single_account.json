@@ -1,0 +1,16 @@
+{
+  "client_id": "dfbed61f-e736-4e3f-8d4a-6a31e1c959ef",
+  "authorization_user_agent": "DEFAULT",
+  "redirect_uri": "msauth://com.example.wnhu_android_app/BDErxzngdlbnS9P+jH88zguOK44=",
+  "broker_redirect_uri_registered": false,
+  "account_mode": "SINGLE",
+  "authorities": [
+    {
+      "type": "AAD",
+      "audience": {
+        "type": "AzureADandPersonalMicrosoftAccount",
+        "tenant_id": "common"
+      }
+    }
+  ]
+}

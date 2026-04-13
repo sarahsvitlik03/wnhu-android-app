@@ -17,10 +17,15 @@ import androidx.compose.runtime.Composable
 @Composable
 fun AccountScreen(
     userData: UserData,
-    app: AppVariables
+    app: AppVariables,
+    authViewModel: AuthViewModel
 ) {
     val sheetState = rememberModalBottomSheetState()
     var showSheet by remember { mutableStateOf(false) }
+    val displayName = userData.user.fullName.ifBlank { "Guest Listener" }
+    val displayEmail = userData.user.email.ifBlank {
+        if (app.isGuest) "Signed in as guest" else "Not signed in"
+    }
 
     if (showSheet) {
         ModalBottomSheet(
@@ -48,13 +53,13 @@ fun AccountScreen(
         )
 
         Text(
-            text = "${userData.user.firstName} ${userData.user.lastName}",
+            text = displayName,
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(top = 8.dp)
         )
 
         Text(
-            text = userData.user.email,
+            text = displayEmail,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
@@ -87,9 +92,7 @@ fun AccountScreen(
 
                 TextButton(
                     onClick = {
-                        app.isLoggedIn = false
-                        app.showLoginPage = true
-                        userData.user = UserModel()
+                        authViewModel.logout(app, userData)
                     }
                 ) {
                     Text("Logout", color = Color.Red)

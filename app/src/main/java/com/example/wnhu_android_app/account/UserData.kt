@@ -113,4 +113,11 @@ class UserData : ViewModel() {
     private fun SnapshotStateList<LikedSongModel>.containsSong(songName: String, artistName: String): Boolean {
         return any { it.songName == songName && it.artistName == artistName }
     }
+
+    fun clearUser() {
+        user = UserModel()
+        songs.clear()
+        dislikedSongs.clear()
+        songFeedbackError = null
+    }
 }

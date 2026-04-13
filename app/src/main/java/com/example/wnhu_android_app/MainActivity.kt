@@ -2,7 +2,7 @@
 // class WnhuMobileApp : Application()
 package com.example.wnhu_android_app
 
-import com.example.wnhu_mobile_app.ContentView
+import android.app.Activity
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material3.Text
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
@@ -23,10 +22,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 
 
 @Composable
@@ -84,25 +82,35 @@ fun WNHUBottomBar(
 }
 @Composable
 fun MainScreen() {
-    var selectedTab by remember { mutableStateOf("stream") }
+    val app = remember { AppVariables() }
+    val userData = remember { UserData() }
+    val authViewModel = remember { AuthViewModel() }
+    val context = LocalContext.current
+    val activity = context as? Activity
 
-    Scaffold(
-        bottomBar = {
-            WNHUBottomBar(
-                selectedTab = selectedTab,
-                onTabSelected = { selectedTab = it }
-            )
-        }
-    ) { padding ->
-        Box(modifier = Modifier.padding(padding)) {
-            val app = remember { AppVariables() }
-            val userData = remember { UserData() }
-
-            when (selectedTab) {
-                "stream" -> StreamScreen(userData)
-                "account" -> AccountScreen(userData, app)
+    when {
+        app.isLoggedIn || app.isGuest -> {
+            Scaffold(
+                bottomBar = {
+                    WNHUBottomBar(
+                        selectedTab = app.selectedTab,
+                        onTabSelected = { app.selectedTab = it }
+                    )
+                }
+            ) { padding ->
+                Box(modifier = Modifier.padding(padding)) {
+                    when (app.selectedTab) {
+                        "stream" -> StreamScreen(userData)
+                        "account" -> AccountScreen(userData, app, authViewModel)
+                    }
+                }
             }
-
         }
+        app.showProfileSetup -> ProfileSetupScreen(app, userData, authViewModel)
+        else -> LoginScreen(
+            app = app,
+            authViewModel = authViewModel,
+            onMicrosoftLogin = { activity?.let { authViewModel.signIn(it, app, userData) } }
+        )
     }
 }
