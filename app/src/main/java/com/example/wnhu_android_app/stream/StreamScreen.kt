@@ -20,16 +20,16 @@ import coil.compose.AsyncImage
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.runtime.collectAsState
 
-
-
 @Composable
-fun StreamScreen() {
+fun StreamScreen(userData: UserData) {
 
     val viewModel: SongDataViewModel = viewModel()
     val song by viewModel.song.collectAsState()
+    val currentReaction = userData.reactionForSong(song)
 
     LaunchedEffect(Unit) {
         viewModel.updateFromAPI()
+        userData.refreshSongRatings()
     }
 
 
@@ -46,8 +46,6 @@ fun StreamScreen() {
     }
 
     var isPlaying by remember { mutableStateOf(false) }
-    var isThumbsUp by remember { mutableStateOf(false) }
-    var isThumbsDown by remember { mutableStateOf(false) }
     var isInfoShowing by remember { mutableStateOf(false) }
 
     Column(
@@ -115,12 +113,13 @@ fun StreamScreen() {
         ) {
 
             IconButton(onClick = {
-                isThumbsDown = !isThumbsDown
-                if (isThumbsUp) isThumbsUp = false
+                if (currentReaction != SongReaction.DISLIKE) {
+                    userData.setSongReaction(song, SongReaction.DISLIKE)
+                }
             }) {
                 Icon(
                     painter = painterResource(
-                        id = if (isThumbsDown) R.drawable.baseline_thumb_down_24
+                        id = if (currentReaction == SongReaction.DISLIKE) R.drawable.baseline_thumb_down_24
                         else R.drawable.baseline_thumb_down_off_alt_24
                     ),
                     contentDescription = "Dislike",
@@ -150,12 +149,13 @@ fun StreamScreen() {
 
 
             IconButton(onClick = {
-                isThumbsUp = !isThumbsUp
-                if (isThumbsDown) isThumbsDown = false
+                if (currentReaction != SongReaction.LIKE) {
+                    userData.setSongReaction(song, SongReaction.LIKE)
+                }
             }) {
                 Icon(
                     painter = painterResource(
-                        id = if (isThumbsUp) R.drawable.baseline_thumb_up_24
+                        id = if (currentReaction == SongReaction.LIKE) R.drawable.baseline_thumb_up_24
                         else R.drawable.baseline_thumb_up_off_alt_24
                     ),
                     contentDescription = "Like",
@@ -163,25 +163,31 @@ fun StreamScreen() {
                     modifier = Modifier.size(30.dp)
                 )
             }
-            if (isInfoShowing) {
-                AlertDialog(
-                    onDismissRequest = { isInfoShowing = false },
-                    title = { Text(song.song) },
-                    text = {
-                        Column {
-                            Text("Artist: ${song.artist}")
-                            Text("Album: ${song.album}")
-                            Text("Genre: ${song.genre}")
-                            Text("Duration: ${song.duration}")
-                        }
-                    },
-                    confirmButton = {
-                        TextButton(onClick = { isInfoShowing = false }) {
-                            Text("Close")
-                        }
-                    }
-                )
-            }
         }
+
+        userData.songFeedbackError?.let { message ->
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(message, color = Color.Red, style = MaterialTheme.typography.bodySmall)
+        }
+    }
+
+    if (isInfoShowing) {
+        AlertDialog(
+            onDismissRequest = { isInfoShowing = false },
+            title = { Text(song.song) },
+            text = {
+                Column {
+                    Text("Artist: ${song.artist}")
+                    Text("Album: ${song.album}")
+                    Text("Genre: ${song.genre}")
+                    Text("Duration: ${song.duration}")
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { isInfoShowing = false }) {
+                    Text("Close")
+                }
+            }
+        )
     }
 }

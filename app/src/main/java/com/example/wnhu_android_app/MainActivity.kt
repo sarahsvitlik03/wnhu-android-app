@@ -99,7 +99,7 @@ fun MainScreen() {
             val userData = remember { UserData() }
 
             when (selectedTab) {
-                "stream" -> StreamScreen()
+                "stream" -> StreamScreen(userData)
                 "account" -> AccountScreen(userData, app)
             }
 
