@@ -10,6 +10,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.Composable
 
@@ -20,11 +21,18 @@ fun AccountScreen(
     app: AppVariables,
     authViewModel: AuthViewModel
 ) {
+    val context = LocalContext.current
     val sheetState = rememberModalBottomSheetState()
     var showSheet by remember { mutableStateOf(false) }
     val displayName = userData.user.fullName.ifBlank { "Guest Listener" }
     val displayEmail = userData.user.email.ifBlank {
         if (app.isGuest) "Signed in as guest" else "Not signed in"
+    }
+
+    LaunchedEffect(showSheet) {
+        if (showSheet) {
+            userData.refreshSongRatings()
+        }
     }
 
     if (showSheet) {
@@ -92,7 +100,7 @@ fun AccountScreen(
 
                 TextButton(
                     onClick = {
-                        authViewModel.logout(app, userData)
+                        authViewModel.logout(context, app, userData)
                     }
                 ) {
                     Text("Logout", color = Color.Red)

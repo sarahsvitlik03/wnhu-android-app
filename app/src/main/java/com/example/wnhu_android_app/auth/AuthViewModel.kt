@@ -1,6 +1,7 @@
 package com.example.wnhu_android_app
 
 import android.app.Activity
+import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -17,6 +18,46 @@ class AuthViewModel : ViewModel() {
 
     var isWorking: Boolean by mutableStateOf(false)
         private set
+
+    var hasRestoredSession: Boolean by mutableStateOf(false)
+        private set
+
+    fun restoreSession(context: Context, app: AppVariables, userData: UserData) {
+        if (hasRestoredSession) return
+
+        authError = null
+        AuthManager.restoreSignedInAccount(
+            context = context,
+            onFound = { profile ->
+                userData.user = UserModel(
+                    firstName = profile.firstName,
+                    lastName = profile.lastName,
+                    email = profile.email
+                )
+                val savedEmail = SessionStore.getLastSignedInEmail(context)
+                val shouldAutoRestore = savedEmail.isBlank() || savedEmail.equals(profile.email, ignoreCase = true)
+
+                if (shouldAutoRestore) {
+                    SessionStore.saveSignedInUser(
+                        context = context,
+                        email = profile.email,
+                        profileComplete = true
+                    )
+                    app.finishLogin()
+                } else {
+                    app.showLogin()
+                }
+                hasRestoredSession = true
+            },
+            onMissing = {
+                hasRestoredSession = true
+            },
+            onError = { message ->
+                authError = message
+                hasRestoredSession = true
+            }
+        )
+    }
 
     fun signIn(activity: Activity, app: AppVariables, userData: UserData) {
         authError = null
@@ -35,27 +76,36 @@ class AuthViewModel : ViewModel() {
                     repository.checkIfUserExists(profile.email)
                         .onSuccess { exists ->
                             isWorking = false
+                            SessionStore.saveSignedInUser(
+                                context = activity,
+                                email = profile.email,
+                                profileComplete = exists
+                            )
+
                             if (exists) {
                                 app.finishLogin()
-                                userData.refreshSongRatings()
                             } else {
                                 app.showProfileSetupPage()
                             }
+                            hasRestoredSession = true
                         }
                         .onFailure {
                             isWorking = false
                             authError = it.message ?: "Could not check your account."
+                            hasRestoredSession = true
                         }
                 }
             },
             onError = { message ->
                 isWorking = false
                 authError = message
+                hasRestoredSession = true
             }
         )
     }
 
     fun createUser(
+        context: Context,
         app: AppVariables,
         userData: UserData,
         firstName: String,
@@ -91,9 +141,14 @@ class AuthViewModel : ViewModel() {
                     firstName = firstName.trim(),
                     lastName = lastName.trim()
                 )
+                SessionStore.saveSignedInUser(
+                    context = context,
+                    email = email,
+                    profileComplete = true
+                )
                 app.finishLogin()
-                userData.refreshSongRatings()
                 isWorking = false
+                hasRestoredSession = true
             }.onFailure {
                 isWorking = false
                 authError = it.message ?: "Could not create your profile."
@@ -101,7 +156,7 @@ class AuthViewModel : ViewModel() {
         }
     }
 
-    fun logout(app: AppVariables, userData: UserData) {
+    fun logout(context: Context, app: AppVariables, userData: UserData) {
         authError = null
         isWorking = true
 
@@ -111,11 +166,15 @@ class AuthViewModel : ViewModel() {
                 onComplete = {
                     isWorking = false
                     userData.clearUser()
+                    SessionStore.clear(context)
+                    hasRestoredSession = true
                     app.showLogin()
                 },
                 onError = {
                     isWorking = false
                     userData.clearUser()
+                    SessionStore.clear(context)
+                    hasRestoredSession = true
                     app.showLogin()
                 }
             )

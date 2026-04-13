@@ -44,7 +44,7 @@ class UserData : ViewModel() {
                     songFeedbackError = null
                 }
                 .onFailure {
-                    songFeedbackError = it.message ?: "Could not load song ratings."
+                    songFeedbackError = it.toUserMessage("Could not load song ratings.")
                 }
             isSyncingSongFeedback = false
         }
@@ -63,13 +63,9 @@ class UserData : ViewModel() {
             request
                 .onSuccess {
                     songFeedbackError = null
-                    if (reaction == SongReaction.LIKE) {
-                        refreshSongRatings()
-                    }
                 }
                 .onFailure {
-                    songFeedbackError = it.message ?: "Could not save song rating."
-                    refreshSongRatings()
+                    songFeedbackError = it.toUserMessage("Could not save song rating.")
                 }
             isSyncingSongFeedback = false
         }
@@ -112,6 +108,18 @@ class UserData : ViewModel() {
 
     private fun SnapshotStateList<LikedSongModel>.containsSong(songName: String, artistName: String): Boolean {
         return any { it.songName == songName && it.artistName == artistName }
+    }
+
+    private fun Throwable.toUserMessage(fallback: String): String {
+        val raw = message.orEmpty()
+        return when {
+            raw.contains("unexpected end of stream", ignoreCase = true) -> "The WNHU server closed the connection. Please try again."
+            raw.contains("failed to connect", ignoreCase = true) -> "Could not reach the WNHU server."
+            raw.contains("connection reset", ignoreCase = true) -> "The WNHU server connection was interrupted."
+            raw.contains("timeout", ignoreCase = true) -> "The WNHU server took too long to respond."
+            raw.isBlank() -> fallback
+            else -> raw
+        }
     }
 
     fun clearUser() {

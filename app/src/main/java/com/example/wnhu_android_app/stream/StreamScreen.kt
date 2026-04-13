@@ -29,7 +29,6 @@ fun StreamScreen(userData: UserData) {
 
     LaunchedEffect(Unit) {
         viewModel.updateFromAPI()
-        userData.refreshSongRatings()
     }
 
 

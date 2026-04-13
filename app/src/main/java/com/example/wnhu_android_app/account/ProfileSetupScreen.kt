@@ -29,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -38,6 +39,7 @@ fun ProfileSetupScreen(
     userData: UserData,
     authViewModel: AuthViewModel
 ) {
+    val context = LocalContext.current
     var firstName by remember { mutableStateOf(userData.user.firstName) }
     var lastName by remember { mutableStateOf(userData.user.lastName) }
     var isUNHStudent by remember { mutableStateOf(false) }
@@ -157,6 +159,7 @@ fun ProfileSetupScreen(
         Button(
             onClick = {
                 authViewModel.createUser(
+                    context = context,
                     app = app,
                     userData = userData,
                     firstName = firstName,

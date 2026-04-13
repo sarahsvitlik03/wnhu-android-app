@@ -65,6 +65,41 @@ object AuthManager {
         })
     }
 
+    fun restoreSignedInAccount(
+        context: Context,
+        onFound: (MicrosoftAccountProfile) -> Unit,
+        onMissing: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        getApplication(
+            context = context,
+            onReady = { app ->
+                app.getCurrentAccountAsync(object : ISingleAccountPublicClientApplication.CurrentAccountCallback {
+                    override fun onAccountLoaded(activeAccount: IAccount?) {
+                        if (activeAccount == null) {
+                            onMissing()
+                        } else {
+                            onFound(activeAccount.toProfile())
+                        }
+                    }
+
+                    override fun onAccountChanged(priorAccount: IAccount?, currentAccount: IAccount?) {
+                        if (currentAccount == null) {
+                            onMissing()
+                        } else {
+                            onFound(currentAccount.toProfile())
+                        }
+                    }
+
+                    override fun onError(exception: MsalException) {
+                        onError(exception.message ?: "Could not restore Microsoft sign-in.")
+                    }
+                })
+            },
+            onError = onError
+        )
+    }
+
     private fun getApplication(
         context: Context,
         onReady: (ISingleAccountPublicClientApplication) -> Unit,
@@ -101,12 +136,16 @@ object AuthManager {
 
     private fun IAuthenticationResult.toProfile(): MicrosoftAccountProfile {
         val account: IAccount = account
-        val claims = account.claims ?: emptyMap<String, Any>()
+        return account.toProfile()
+    }
+
+    private fun IAccount.toProfile(): MicrosoftAccountProfile {
+        val claims = claims ?: emptyMap<String, Any>()
         val firstName = claims["given_name"]?.toString().orEmpty()
         val lastName = claims["family_name"]?.toString().orEmpty()
 
         return MicrosoftAccountProfile(
-            email = account.username.orEmpty(),
+            email = username.orEmpty(),
             firstName = firstName,
             lastName = lastName
         )
