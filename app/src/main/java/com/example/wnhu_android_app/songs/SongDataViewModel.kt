@@ -23,14 +23,21 @@ class SongDataViewModel : ViewModel() {
 
     fun updateFromAPI() {
         viewModelScope.launch {
-            val updated = iTunesAPI.fetchSongInfo(
-                title = _song.value.song,
-                artist = _song.value.artist
-            )
-            if (updated != null) {
-                _song.value = updated
+            val liveData = fetchLiveMetadata()
+            if (liveData != null) {
+                val artist = liveData.artist ?: "Unknown"
+                val title = liveData.title ?: "Unknown"
+
+                // Now search iTunes using the live info
+                val itunesSong = iTunesAPI.fetchSongInfo(title, artist)
+
+                if (itunesSong != null) {
+                    _song.value = itunesSong
+                } else {
+                    // Fallback: update UI with Icecast info even if iTunes fails
+                    _song.value = SongModel(song = title, artist = artist)
+                }
             }
-            println("ARTWORK: ${updated?.imageURL}")
         }
     }
 }

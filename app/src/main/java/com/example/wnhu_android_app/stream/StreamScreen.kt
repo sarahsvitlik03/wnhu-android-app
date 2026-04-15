@@ -1,5 +1,6 @@
 package com.example.wnhu_android_app
 
+import android.media.AudioAttributes
 import android.media.MediaPlayer
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -8,6 +9,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.material.icons.Icons
+import kotlinx.coroutines.delay
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -26,6 +28,9 @@ fun StreamScreen(userData: UserData) {
     val viewModel: SongDataViewModel = viewModel()
     val song by viewModel.song.collectAsState()
     val currentReaction = userData.reactionForSong(song)
+    var isPrepared by remember { mutableStateOf(false) }
+    var isPlaying by remember { mutableStateOf(false) }
+    var isInfoShowing by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.updateFromAPI()
@@ -33,9 +38,27 @@ fun StreamScreen(userData: UserData) {
 
 
     val context = LocalContext.current
-
+    val streamUrl = "http://wnhu-stream1.newhaven.edu:8050/wnhu"
     val mediaPlayer = remember {
-        MediaPlayer.create(context, R.raw.heavy)
+        MediaPlayer().apply {
+            // Tell Android this is music/media content
+            setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .build()
+            )
+            setDataSource("http://wnhu-stream1.newhaven.edu:8050/wnhu")
+            setOnPreparedListener {
+                isPrepared = true
+            }
+            // If it still hangs, add an ErrorListener to see why in the logs
+            setOnErrorListener { _, what, extra ->
+                println("MediaPlayer Error: $what, $extra")
+                false
+            }
+            prepareAsync()
+        }
     }
 
     DisposableEffect(Unit) {
@@ -43,9 +66,6 @@ fun StreamScreen(userData: UserData) {
             mediaPlayer.release()
         }
     }
-
-    var isPlaying by remember { mutableStateOf(false) }
-    var isInfoShowing by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -127,25 +147,29 @@ fun StreamScreen(userData: UserData) {
                 )
             }
 
-            IconButton(onClick = {
-                isPlaying = !isPlaying
-                if (isPlaying) {
-                    mediaPlayer.start()
+            IconButton(
+                onClick = {
+                    if (isPrepared) {
+                        isPlaying = !isPlaying
+                        if (isPlaying) mediaPlayer.start() else mediaPlayer.pause()
+                    }
+                },
+                enabled = isPrepared
+            ) {
+                if (!isPrepared) {
+                    CircularProgressIndicator(modifier = Modifier.size(50.dp), color = Color.Red)
                 } else {
-                    mediaPlayer.pause()
+                    Icon(
+                        painter = painterResource(
+                            id = if (isPlaying) R.drawable.baseline_pause_circle_24
+                            else R.drawable.baseline_play_circle_filled_24
+                        ),
+                        contentDescription = "Play/Pause",
+                        tint = Color.Red,
+                        modifier = Modifier.size(100.dp)
+                    )
                 }
-            }) {
-                Icon(
-                    painter = painterResource(
-                        id = if (isPlaying) R.drawable.baseline_pause_circle_24
-                        else R.drawable.baseline_play_circle_filled_24
-                    ),
-                    contentDescription = "Play/Pause",
-                    tint = Color.Red,
-                    modifier = Modifier.size(100.dp)
-                )
             }
-
 
             IconButton(onClick = {
                 if (currentReaction != SongReaction.LIKE) {
@@ -189,6 +213,12 @@ fun StreamScreen(userData: UserData) {
             }
         )
     }
+    LaunchedEffect(Unit) {
+        while(true) {
+            viewModel.updateFromAPI()
+            delay(30000) // Refresh every 30 seconds
+        }
+    }
 }
 
 private fun formatSongDuration(durationMillis: Int): String {
@@ -197,3 +227,4 @@ private fun formatSongDuration(durationMillis: Int): String {
     val seconds = totalSeconds % 60
     return String.format("%d:%02d", minutes, seconds)
 }
+

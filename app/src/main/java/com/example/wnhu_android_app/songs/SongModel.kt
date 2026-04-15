@@ -17,4 +17,3 @@ data class SongModel(
         get() = imageURL.replace("100x100", "600x600")
 }
 
-
