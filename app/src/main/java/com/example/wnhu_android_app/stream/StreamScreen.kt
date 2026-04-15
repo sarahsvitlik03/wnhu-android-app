@@ -2,6 +2,7 @@ package com.example.wnhu_android_app
 
 import android.media.AudioAttributes
 import android.media.MediaPlayer
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -9,7 +10,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.material.icons.Icons
+import androidx.compose.foundation.shape.CircleShape
 import kotlinx.coroutines.delay
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -21,7 +24,11 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun StreamScreen(userData: UserData) {
 
@@ -41,8 +48,7 @@ fun StreamScreen(userData: UserData) {
     val streamUrl = "http://wnhu-stream1.newhaven.edu:8050/wnhu"
     val mediaPlayer = remember {
         MediaPlayer().apply {
-            // Tell Android this is music/media content
-            setAudioAttributes(
+             setAudioAttributes(
                 AudioAttributes.Builder()
                     .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                     .setUsage(AudioAttributes.USAGE_MEDIA)
@@ -52,8 +58,7 @@ fun StreamScreen(userData: UserData) {
             setOnPreparedListener {
                 isPrepared = true
             }
-            // If it still hangs, add an ErrorListener to see why in the logs
-            setOnErrorListener { _, what, extra ->
+             setOnErrorListener { _, what, extra ->
                 println("MediaPlayer Error: $what, $extra")
                 false
             }
@@ -116,22 +121,54 @@ fun StreamScreen(userData: UserData) {
 
 
         Spacer(modifier = Modifier.height(20.dp))
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = song.song,
+                color = Color.White,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .basicMarquee(
+                        iterations = Int.MAX_VALUE,
+                        delayMillis = 2000,
+                        initialDelayMillis = 2000,
+                        velocity = 40.dp
+                    )
+            )
 
-        Text(song.song, color = Color.White, style = MaterialTheme.typography.titleLarge)
-        Text(song.artist, color = Color.Gray, style = MaterialTheme.typography.titleMedium)
-        Text(song.album, color = Color.Gray, style = MaterialTheme.typography.titleMedium)
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = song.artist,
+                color = Color.Gray,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Medium,
+                textAlign = TextAlign.Center
+            )
+            Text(
+                text = song.album,
+                color = Color.White.copy(alpha = 0.6f),
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center,
+            )
+        }
 
-        Spacer(modifier = Modifier.height(30.dp))
+        Spacer(modifier = Modifier.height(40.dp))
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp),
+                .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceAround
+            horizontalArrangement = Arrangement.SpaceEvenly
         ) {
 
-            IconButton(onClick = {
+             IconButton(onClick = {
                 if (currentReaction != SongReaction.DISLIKE) {
                     userData.setSongReaction(song, SongReaction.DISLIKE)
                 }
@@ -142,35 +179,40 @@ fun StreamScreen(userData: UserData) {
                         else R.drawable.baseline_thumb_down_off_alt_24
                     ),
                     contentDescription = "Dislike",
-                    tint = Color.Red,
-                    modifier = Modifier.size(30.dp)
+                     tint = if (currentReaction == SongReaction.DISLIKE) Color.Red else Color.White.copy(
+                        alpha = 0.7f
+                    ),
+                    modifier = Modifier.size(32.dp)
                 )
             }
-
-            IconButton(
-                onClick = {
-                    if (isPrepared) {
-                        isPlaying = !isPlaying
-                        if (isPlaying) mediaPlayer.start() else mediaPlayer.pause()
-                    }
-                },
-                enabled = isPrepared
+            Surface(
+                modifier = Modifier.size(50.dp),
+                shape = CircleShape,
+                color = Color.White.copy(alpha = 0.1f),
             ) {
-                if (!isPrepared) {
-                    CircularProgressIndicator(modifier = Modifier.size(50.dp), color = Color.Red)
-                } else {
-                    Icon(
-                        painter = painterResource(
-                            id = if (isPlaying) R.drawable.baseline_pause_circle_24
-                            else R.drawable.baseline_play_circle_filled_24
-                        ),
-                        contentDescription = "Play/Pause",
-                        tint = Color.Red,
-                        modifier = Modifier.size(100.dp)
-                    )
+                Box(contentAlignment = Alignment.Center) {
+                    IconButton(
+                        onClick = {
+                            if (isPrepared) {
+                                isPlaying = !isPlaying
+                                if (isPlaying) mediaPlayer.start() else mediaPlayer.pause()
+                            }
+                        },
+                        enabled = isPrepared,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                            Icon(
+                                painter = painterResource(
+                                    id = if (isPlaying) R.drawable.baseline_pause_circle_24
+                                    else R.drawable.baseline_play_circle_filled_24
+                                ),
+                                contentDescription = "Play/Pause",
+                                tint = Color.Red,
+                                modifier = Modifier.size(50.dp)
+                            )
+                        }
                 }
             }
-
             IconButton(onClick = {
                 if (currentReaction != SongReaction.LIKE) {
                     userData.setSongReaction(song, SongReaction.LIKE)
@@ -182,41 +224,18 @@ fun StreamScreen(userData: UserData) {
                         else R.drawable.baseline_thumb_up_off_alt_24
                     ),
                     contentDescription = "Like",
-                    tint = Color.Red,
-                    modifier = Modifier.size(30.dp)
+                    tint = if (currentReaction == SongReaction.LIKE) Color.Red else Color.White.copy(
+                        alpha = 0.7f
+                    ),
+                    modifier = Modifier.size(32.dp)
                 )
             }
         }
-
-        userData.songFeedbackError?.let { message ->
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(message, color = Color.Red, style = MaterialTheme.typography.bodySmall)
-        }
-    }
-
-    if (isInfoShowing) {
-        AlertDialog(
-            onDismissRequest = { isInfoShowing = false },
-            title = { Text(song.song) },
-            text = {
-                Column {
-                    Text("Artist: ${song.artist}")
-                    Text("Album: ${song.album}")
-                    Text("Genre: ${song.genre}")
-                    Text("Duration: ${formatSongDuration(song.duration)}")
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { isInfoShowing = false }) {
-                    Text("Close")
-                }
-            }
-        )
     }
     LaunchedEffect(Unit) {
         while(true) {
             viewModel.updateFromAPI()
-            delay(30000) // Refresh every 30 seconds
+            delay(30000)
         }
     }
 }
