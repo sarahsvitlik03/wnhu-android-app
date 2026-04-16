@@ -10,7 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun LikedSongsSheet(userData: UserData) {
+fun LikedSongsSheet(userData: UserData, isLoggedIn: Boolean) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -20,19 +20,27 @@ fun LikedSongsSheet(userData: UserData) {
 
         Spacer(Modifier.height(16.dp))
 
-        userData.songs.forEach { song: LikedSongModel ->
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 6.dp)
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
+        if (!isLoggedIn) {
+            Text(
+                text = "Login to save songs",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        } else {
+            userData.songs.forEach { song: LikedSongModel ->
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 6.dp)
                 ) {
-                    Icon(Icons.Default.MusicNote, contentDescription = null)
-                    Spacer(Modifier.width(12.dp))
-                    Text("${song.songName} — ${song.artistName}")
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.MusicNote, contentDescription = null)
+                        Spacer(Modifier.width(12.dp))
+                        Text("${song.songName} — ${song.artistName}")
+                    }
                 }
             }
         }
