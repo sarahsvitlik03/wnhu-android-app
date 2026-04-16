@@ -8,17 +8,7 @@ import kotlinx.coroutines.launch
 
 class SongDataViewModel : ViewModel() {
 
-    private val _song = MutableStateFlow(
-        SongModel(
-            song = "Heavy",
-            artist = "The Marias",
-            album = "",
-            genre = "",
-            releaseDate = "",
-            duration = 180000,
-            imageURL = ""
-        )
-    )
+    private val _song = MutableStateFlow(SongModel())
     val song: StateFlow<SongModel> = _song
 
     fun updateFromAPI() {
@@ -37,6 +27,8 @@ class SongDataViewModel : ViewModel() {
                     // Fallback: update UI with Icecast info even if iTunes fails
                     _song.value = SongModel(song = title, artist = artist)
                 }
+            } else {
+                _song.value = SongModel(song = "Unknown", artist = "Unknown")
             }
         }
     }

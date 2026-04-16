@@ -1,7 +1,10 @@
 package com.example.wnhu_android_app
 
-import android.media.AudioAttributes
-import android.media.MediaPlayer
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -22,6 +25,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 import coil.compose.AsyncImage
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.runtime.collectAsState
@@ -36,41 +41,40 @@ import java.util.Locale
 @Composable
 fun StreamScreen(userData: UserData) {
 
+    val context = LocalContext.current
     val viewModel: SongDataViewModel = viewModel()
     val song by viewModel.song.collectAsState()
     val currentReaction = userData.reactionForSong(song)
-    var isPrepared by remember { mutableStateOf(false) }
-    var isPlaying by remember { mutableStateOf(false) }
+    val isPlaying by RadioPlaybackController.isPlaying.collectAsState()
     var isInfoShowing by remember { mutableStateOf(false) }
     val infoSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) {
+        RadioPlaybackService.play(context)
+    }
+
+    fun requestPlay() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        } else {
+            RadioPlaybackService.play(context)
+        }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.updateFromAPI()
     }
 
-    val mediaPlayer = remember {
-        MediaPlayer().apply {
-             setAudioAttributes(
-                AudioAttributes.Builder()
-                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                    .setUsage(AudioAttributes.USAGE_MEDIA)
-                    .build()
-            )
-            setDataSource("http://wnhu-stream1.newhaven.edu:8050/wnhu")
-            setOnPreparedListener {
-                isPrepared = true
-            }
-             setOnErrorListener { _, what, extra ->
-                println("MediaPlayer Error: $what, $extra")
-                false
-            }
-            prepareAsync()
-        }
-    }
-
-    DisposableEffect(Unit) {
-        onDispose {
-            mediaPlayer.release()
+    LaunchedEffect(song.song, song.artist, isPlaying) {
+        if (isPlaying) {
+            RadioPlaybackService.updateMetadata(context, song.song, song.artist)
         }
     }
 
@@ -195,12 +199,12 @@ fun StreamScreen(userData: UserData) {
                 Box(contentAlignment = Alignment.Center) {
                     IconButton(
                         onClick = {
-                            if (isPrepared) {
-                                isPlaying = !isPlaying
-                                if (isPlaying) mediaPlayer.start() else mediaPlayer.pause()
+                            if (isPlaying) {
+                                RadioPlaybackService.pause(context)
+                            } else {
+                                requestPlay()
                             }
                         },
-                        enabled = isPrepared,
                         modifier = Modifier.fillMaxSize()
                     ) {
                             Icon(

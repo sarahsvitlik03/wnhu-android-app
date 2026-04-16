@@ -7,10 +7,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun LikedSongsSheet(userData: UserData, isLoggedIn: Boolean) {
+fun LikedSongsSheet(userData: UserData, app: AppVariables) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -20,11 +21,13 @@ fun LikedSongsSheet(userData: UserData, isLoggedIn: Boolean) {
 
         Spacer(Modifier.height(16.dp))
 
-        if (!isLoggedIn) {
+        if (!app.isLoggedIn) {
             Text(
                 text = "Login to save songs",
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
             )
         } else {
             userData.songs.forEach { song: LikedSongModel ->

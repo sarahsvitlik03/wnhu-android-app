@@ -1,3 +1,7 @@
 <resources>
-    <string name="app_name">wnhu-android-app</string>
+    <string name="app_name">WNHU 88.7</string>
+    <string name="radio_notification_channel_name">Radio playback</string>
+    <string name="radio_notification_channel_description">Shows WNHU on the lock screen and in quick settings while you listen</string>
+    <string name="radio_play">Play</string>
+    <string name="radio_pause">Pause</string>
 </resources>

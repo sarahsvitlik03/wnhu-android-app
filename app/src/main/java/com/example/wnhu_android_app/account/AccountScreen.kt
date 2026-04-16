@@ -40,7 +40,7 @@ fun AccountScreen(
             onDismissRequest = { showSheet = false },
             sheetState = sheetState
         ) {
-            LikedSongsSheet(userData, app.isLoggedIn)
+            LikedSongsSheet(userData, app)
         }
     }
 
