@@ -1,5 +1,6 @@
 package com.example.wnhu_android_app
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 enum class SongReaction {
@@ -27,5 +28,7 @@ data class PulledSongDto(
 
 @Serializable
 data class PullLikedSongsResponse(
-    val songs: List<PulledSongDto> = emptyList()
+    val songs: List<PulledSongDto> = emptyList(),
+    @SerialName("disliked_songs")
+    val dislikedSongs: List<PulledSongDto> = emptyList()
 )

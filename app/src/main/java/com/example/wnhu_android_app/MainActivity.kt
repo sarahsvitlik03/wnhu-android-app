@@ -106,6 +106,9 @@ fun MainScreen() {
 
     when {
         app.isLoggedIn || app.isGuest -> {
+            LaunchedEffect(app.isLoggedIn, app.isGuest, userData.user.email) {
+                userData.refreshSongRatings()
+            }
             Scaffold(
                 bottomBar = {
                     WNHUBottomBar(

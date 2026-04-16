@@ -24,7 +24,7 @@ object SongFeedbackApi {
         postWithoutResponseBody("/dislikedSong", json.encodeToString(request))
     }
 
-    suspend fun fetchLikedSongs(request: PullLikedSongsRequest): Result<List<PulledSongDto>> = withContext(Dispatchers.IO) {
+    suspend fun fetchLikedSongs(request: PullLikedSongsRequest): Result<PullLikedSongsResponse> = withContext(Dispatchers.IO) {
         runCatching {
             val connection = openConnection("$baseUrl/pullLikedSongs", "POST")
             connection.doOutput = true
@@ -39,8 +39,8 @@ object SongFeedbackApi {
 
             val body = connection.inputStream.bufferedReader().use(BufferedReader::readText)
             connection.disconnect()
-            if (body.isBlank()) emptyList()
-            else json.decodeFromString<PullLikedSongsResponse>(body).songs
+            if (body.isBlank()) PullLikedSongsResponse()
+            else json.decodeFromString<PullLikedSongsResponse>(body)
         }
     }
 

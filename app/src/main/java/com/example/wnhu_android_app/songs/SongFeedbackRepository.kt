@@ -1,7 +1,7 @@
 package com.example.wnhu_android_app
 
 class SongFeedbackRepository {
-    suspend fun loadLikedSongs(userEmail: String): Result<List<PulledSongDto>> {
+       suspend fun loadSongRatings(userEmail: String): Result<PullLikedSongsResponse> {
         return SongFeedbackApi.fetchLikedSongs(PullLikedSongsRequest(email = userEmail))
     }
 

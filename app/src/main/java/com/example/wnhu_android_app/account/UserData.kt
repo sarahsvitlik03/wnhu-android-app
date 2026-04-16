@@ -33,14 +33,13 @@ class UserData : ViewModel() {
         private set
 
     fun refreshSongRatings() {
-        val email = user.email.trim()
-        if (email.isBlank()) return
+        val email = ratingsEmail()
 
         viewModelScope.launch {
             isSyncingSongFeedback = true
-            repository.loadLikedSongs(email)
-                .onSuccess { likedSongs ->
-                    applyLikedSongs(likedSongs)
+            repository.loadSongRatings(email)
+                .onSuccess { payload ->
+                    applySongRatingsFromServer(payload)
                     songFeedbackError = null
                 }
                 .onFailure {
@@ -48,6 +47,11 @@ class UserData : ViewModel() {
                 }
             isSyncingSongFeedback = false
         }
+    }
+
+    private fun ratingsEmail(): String {
+        val e = user.email.trim()
+        return e.ifBlank { "anonymous@default.com" }
     }
 
     fun setSongReaction(song: SongModel, reaction: SongReaction) {
@@ -79,14 +83,24 @@ class UserData : ViewModel() {
         }
     }
 
-    private fun applyLikedSongs(ratings: List<PulledSongDto>) {
+    private fun applySongRatingsFromServer(payload: PullLikedSongsResponse) {
         songs.clear()
+        dislikedSongs.clear()
 
-        ratings.forEach { rating ->
-            songs += LikedSongModel(
+        payload.dislikedSongs.forEach { rating ->
+            dislikedSongs += LikedSongModel(
                 songName = rating.title,
                 artistName = rating.artist
             )
+        }
+        val dislikedKeys = dislikedSongs.map { it.songName to it.artistName }.toSet()
+        payload.songs.forEach { rating ->
+            if ((rating.title to rating.artist) !in dislikedKeys) {
+                songs += LikedSongModel(
+                    songName = rating.title,
+                    artistName = rating.artist
+                )
+            }
         }
     }
 
