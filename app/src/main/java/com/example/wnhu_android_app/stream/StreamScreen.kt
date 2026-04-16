@@ -5,7 +5,9 @@ import android.media.MediaPlayer
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,7 +20,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -26,9 +27,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun StreamScreen(userData: UserData) {
 
@@ -38,14 +42,12 @@ fun StreamScreen(userData: UserData) {
     var isPrepared by remember { mutableStateOf(false) }
     var isPlaying by remember { mutableStateOf(false) }
     var isInfoShowing by remember { mutableStateOf(false) }
+    val infoSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     LaunchedEffect(Unit) {
         viewModel.updateFromAPI()
     }
 
-
-    val context = LocalContext.current
-    val streamUrl = "http://wnhu-stream1.newhaven.edu:8050/wnhu"
     val mediaPlayer = remember {
         MediaPlayer().apply {
              setAudioAttributes(
@@ -231,7 +233,21 @@ fun StreamScreen(userData: UserData) {
                 )
             }
         }
+
     }
+
+    if (isInfoShowing) {
+        ModalBottomSheet(
+            onDismissRequest = { isInfoShowing = false },
+            sheetState = infoSheetState,
+        ) {
+            SongInfoSheetContent(
+                song = song,
+                onDone = { isInfoShowing = false }
+            )
+        }
+    }
+
     LaunchedEffect(Unit) {
         while(true) {
             viewModel.updateFromAPI()
@@ -245,5 +261,103 @@ private fun formatSongDuration(durationMillis: Int): String {
     val minutes = totalSeconds / 60
     val seconds = totalSeconds % 60
     return String.format("%d:%02d", minutes, seconds)
+}
+
+private fun formatReleaseDate(iso: String): String {
+    if (iso.isBlank()) return ""
+    return try {
+        val instant = Instant.parse(iso)
+        val localDate = instant.atZone(ZoneId.systemDefault()).toLocalDate()
+        DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.getDefault()).format(localDate)
+    } catch (_: Exception) {
+        iso.substringBefore('T').ifBlank { iso }
+    }
+}
+
+@Composable
+private fun SongInfoSheetContent(song: SongModel, onDone: () -> Unit) {
+    val scroll = rememberScrollState()
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp)
+            .padding(bottom = 24.dp)
+            .verticalScroll(scroll)
+    ) {
+        Text(
+            text = "Song information",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.SemiBold
+        )
+        Spacer(modifier = Modifier.height(20.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            AsyncImage(
+                model = song.highResArtwork,
+                contentDescription = null,
+                modifier = Modifier
+                    .size(120.dp)
+                    .shadow(6.dp, RoundedCornerShape(8.dp)),
+                contentScale = ContentScale.Crop,
+                placeholder = painterResource(id = R.drawable.wnhu),
+                error = painterResource(id = R.drawable.wnhu)
+            )
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = song.song.ifBlank { "Unknown title" },
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = song.artist.ifBlank { "Unknown artist" },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                if (song.album.isNotBlank()) {
+                    Text(
+                        text = song.album,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+        Spacer(modifier = Modifier.height(24.dp))
+        if (song.genre.isNotBlank()) {
+            SongInfoDetailRow(label = "Genre", value = song.genre)
+        }
+        val release = formatReleaseDate(song.releaseDate)
+        if (release.isNotBlank()) {
+            SongInfoDetailRow(label = "Release date", value = release)
+        }
+        if (song.duration > 0) {
+            SongInfoDetailRow(label = "Duration", value = formatSongDuration(song.duration))
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        TextButton(
+            onClick = onDone,
+            modifier = Modifier.align(Alignment.CenterHorizontally)
+        ) {
+            Text("Done")
+        }
+    }
+}
+
+@Composable
+private fun SongInfoDetailRow(label: String, value: String) {
+    Column(modifier = Modifier.padding(vertical = 8.dp)) {
+        Text(
+            text = label.uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyLarge
+        )
+    }
 }
 
