@@ -91,7 +91,7 @@ fun AccountScreen(
 
         Spacer(Modifier.height(24.dp))
 
-        // Logout
+        // Logout (guests see Login here instead)
         Card(
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -100,10 +100,17 @@ fun AccountScreen(
 
                 TextButton(
                     onClick = {
-                        authViewModel.logout(context, app, userData)
+                        if (app.isGuest) {
+                            app.showLogin()
+                        } else {
+                            authViewModel.logout(context, app, userData)
+                        }
                     }
                 ) {
-                    Text("Logout", color = Color.Red)
+                    Text(
+                        text = if (app.isGuest) "Login" else "Logout",
+                        color = if (app.isGuest) MaterialTheme.colorScheme.primary else Color.Red
+                    )
                 }
             }
         }
