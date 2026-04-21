@@ -18,8 +18,8 @@ data class IceStats(
 
 @Serializable
 data class SourceInfo(
-    val artist: String? = "Unknown Artist",
-    val title: String? = "Unknown Song",
+    val currently_playing: String? = "",
+    val title: String? = "",
     val genre: String? = "College Radio",
     val server_name: String? = ""
 )

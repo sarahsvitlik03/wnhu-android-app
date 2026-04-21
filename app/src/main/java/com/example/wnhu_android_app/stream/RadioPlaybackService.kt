@@ -298,7 +298,7 @@ class RadioPlaybackService : Service() {
     }
 
     companion object {
-        const val STREAM_URL = "http://wnhu-stream1.newhaven.edu:8050/wnhu"
+        const val STREAM_URL = "https://wnhu-stream1.newhaven.edu:8051/stationengine"
         private const val CHANNEL_ID = "wnhu_radio_playback"
         private const val NOTIFICATION_ID = 8701
         private const val DEFAULT_TITLE = "WNHU 88.7"

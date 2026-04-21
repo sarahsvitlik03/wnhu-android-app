@@ -15,17 +15,18 @@ class SongDataViewModel : ViewModel() {
         viewModelScope.launch {
             val liveData = fetchLiveMetadata()
             if (liveData != null) {
-                val artist = liveData.artist ?: "Unknown"
-                val title = liveData.title ?: "Unknown"
+                val (artist, title) = parseIcecastTrack(liveData)
+                val safeArtist = artist.ifBlank { "Unknown" }
+                val safeTitle = title.ifBlank { "Unknown" }
 
                 // Now search iTunes using the live info
-                val itunesSong = iTunesAPI.fetchSongInfo(title, artist)
+                val itunesSong = iTunesAPI.fetchSongInfo(safeTitle, safeArtist)
 
                 if (itunesSong != null) {
                     _song.value = itunesSong
                 } else {
                     // Fallback: update UI with Icecast info even if iTunes fails
-                    _song.value = SongModel(song = title, artist = artist)
+                    _song.value = SongModel(song = safeTitle, artist = safeArtist)
                 }
             } else {
                 _song.value = SongModel(song = "Unknown", artist = "Unknown")
